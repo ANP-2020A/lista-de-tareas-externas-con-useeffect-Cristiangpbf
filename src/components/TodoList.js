@@ -1,148 +1,150 @@
 /**
  * Created by chalosalvador on 8/2/20
  */
-import React, { useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import '../styles/todo-list.css';
 
 const TodoList = () => {
 
-  const [ todos, setTodos ] = React.useState( [] );
-  const [ completed, setCompleted ] = React.useState( [] );
-  const [ darkMode, setDarkMode ] = React.useState( false );
-  const [ windowWidth, setWindowWidth ] = React.useState( window.innerWidth );
+    const [todos, setTodos] = useState([]);
+    const [darkMode, setDarkMode] = useState(false);
+    const [userInfo, setUserInfo] = useState(null);
+    const [taskInfo, setTaskInfo] = useState(null);
 
-  useEffect( () => {
-    console.log( 'efecto', todos.length );
-    if( todos.length > 0 ) {
-      document.title = `${ todos.length } tareas pendientes`;
-    } else {
-      document.title = 'No tienes tareas pendientes';
-    }
-  }, [ todos ] );
+    const [num, setNum] = useState(1);
 
-  useEffect( () => {
-    console.log( 'cambio de fondo', darkMode );
-    if( darkMode ) {
-      console.log( 'DARK' );
-    } else {
-      console.log( 'LIGHT' );
-    }
-  }, [ darkMode ] );
 
-  useEffect( () => {
-    fetch( 'https://jsonplaceholder.typicode.com/users/1' )
-      .then( ( data ) => {
-        return data.json();
-      } )
-      .then( ( json ) => {
-        console.log( 'Datos de usuario', json );
-      } );
-  }, [] );
+    useEffect(() => {
+        const getData = async () => {
+            const data = await fetch('https://jsonplaceholder.typicode.com/users/' + num);
+            const dataJson = await data.json();
+            setUserInfo(dataJson);
+            const data1 = await fetch('https://jsonplaceholder.typicode.com/users/' + num + '/todos');
+            const dataJson1 = await data1.json();
+            setTaskInfo(dataJson1);
+        };
+        getData();
 
-  const handleResize = () => {
-    setWindowWidth( window.innerWidth );
-  };
+    }, [num]);
 
-  useEffect( () => {
-    console.log( 'Ejecución del efecto' );
-    window.addEventListener( 'resize', handleResize );
+    useEffect(() => {
+        console.log('efecto', todos.length);
+        if (todos.length > 0) {
+            document.title = `${todos.length} tareas pendientes`;
+        } else {
+            document.title = `No tienes tareas pendientes`;
+        }
+    }, [todos]);
 
-    return () => {
-      console.log( 'retorno del efecto ' );
-      window.removeEventListener( 'resize', handleResize );
+    const handleAddTask = () => {
+        const task = document.querySelector('#task').value;
+        setTodos(prevState => [...prevState, task]);
+        document.querySelector('#task').value = '';
     };
-  } );
 
-  const handleAddTask = () => {
-    const task = document.querySelector( '#task' ).value;
-    setTodos( prevState => [ ...prevState, task ] );
-    document.querySelector( '#task' ).value = '';
-  };
+    const previousUser = () => {
+        setNum(num - 1)
+        console.log(num);
+    };
 
-  const handleDeleteTask = ( index ) => {
-    setTodos( ( prevState ) => {
-      return prevState.filter( ( task, i ) => i !== index );
-    } );
-  };
+    const nextUser = () => {
+        setNum(num + 1)
+        console.log(num);
+    }
 
-  const handleCompleteTask = ( index ) => {
-    setCompleted( ( prevState ) => [
-      ...prevState,
-      todos[ index ]
-    ] );
+    const handleDeleteTask = (index) => {
+        setTaskInfo((prevState) => {
+            return prevState.filter((taskInfo, i) => i !== index);
+        });
+    };
 
-    handleDeleteTask( index );
-  };
+    return (
+        <div>
+            <div>
+                {num > 1 && <button id="previousUser" onClick={previousUser}>ATRAS</button>}
+                {num < 10 && <button id="nextUser" onClick={nextUser}>SIGUIENTE</button>}
 
-  const handleDarkMode = () => {
-    setDarkMode( !darkMode );
-  };
+                <h1>Información del usuario</h1>
+                {
+                    userInfo
+                        ?
+                        <ul>
+                            <li> Nombre: {userInfo.name}</li>
+                            <li> Usuario: {userInfo.username}</li>
+                            <li> Correo: {userInfo.email}</li>
+                            <li> Web: {userInfo.website}</li>
+                            <li> Teléfono: {userInfo.phone}</li>
+                        </ul>
+                        :"CARGANDO..."
+                }
+            </div>
 
-  return (
-    <div className={ darkMode
-      ? 'dark-mode'
-      : '' }>
-      <div>Ancho de la ventana: { windowWidth }</div>
-      <button onClick={ handleDarkMode }>
-        {
-          darkMode
-            ? 'Modo claro'
-            : 'Modo oscuro'
-        }
-      </button>
-      <div>
-        <label htmlFor='task'>Tarea</label>
-        <input type='text' id='task' />
+            <div>
+                <label htmlFor='task'>Tarea</label>
+                <input type='text' id='task'/>
+                <button onClick={handleAddTask}>Agregar tarea</button>
+            </div>
 
-        <button onClick={ handleAddTask }>Agregar tarea</button>
-      </div>
-      <h1>Lista de tareas pendientes ({ todos.length } en total)</h1>
-      <table>
-        <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Eliminar</th>
-          <th>Completar</th>
-        </tr>
-        </thead>
-        <tbody>
-        {
-          todos.map( ( task, index ) => (
-              <tr key={ index }>
-                <td>{ task }</td>
-                <td>
-                  <button onClick={ () => handleDeleteTask( index ) }>Eliminar</button>
-                </td>
-                <td>
-                  <button onClick={ () => handleCompleteTask( index ) }>Completada</button>
-                </td>
-              </tr>
-            )
-          )
-        }
-        </tbody>
-      </table>
+            {
+            taskInfo
+            ?
+            <div>
+                <h1>Lista de tareas pendientes ({taskInfo.length} en total)</h1>
 
-      <h1>Lista de tareas completadas ({ completed.length } en total)</h1>
-      <table>
-        <thead>
-        <tr>
-          <th>Nombre</th>
-        </tr>
-        </thead>
-        <tbody>
-        {
-          completed.map( ( task, index ) => (
-              <tr key={ index }>
-                <td>{ task }</td>
-              </tr>
-            )
-          )
-        }
-        </tbody>
-      </table>
-    </div>
-  );
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                        <th>Eliminar</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {
+
+                        taskInfo.map((taskInfo, index) => (
+                                <tr key={index}>
+                                    <td>{taskInfo.title}</td>
+                                    <td>
+                                    {
+                                    taskInfo.completed
+                                        ? <button id="complete" className={
+                                            darkMode
+                                                ? ''
+                                                : 'dark-mode'}
+                                                  onClick={() => setDarkMode((prevDarkMode) =>
+                                                      !prevDarkMode)}>
+                                            {
+                                                taskInfo.completed
+                                                    ? ' Completada'
+                                                    : ' Marcar como completada'
+                                            }
+                                        </button>
+                                        : <button id="incomplete">
+                                            {
+                                                taskInfo.completed
+                                                    ? ' Completada'
+                                                    : ' Marcar como completada'
+                                            }
+                                        </button>
+                                    }
+                                    </td>
+                                    <td>
+                                        <button id="delete" onClick={() => handleDeleteTask(index)}>
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            )
+                        )
+                    }
+                    </tbody>
+                </table>
+            </div>
+            : "CARGANDO..."
+            }
+        </div>
+    );
 };
 
 export default TodoList;
