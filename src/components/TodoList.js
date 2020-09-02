@@ -131,7 +131,7 @@ const TodoList = () => {
                                     </td>
                                     <td>
                                         <button id="delete" onClick={() => handleDeleteTask(index)}>
-                                            Eliminar
+                                            Elimina
                                         </button>
                                     </td>
                                 </tr>
